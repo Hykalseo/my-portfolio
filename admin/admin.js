@@ -5,6 +5,79 @@ const portfolioData = {
     services: []
 };
 
+// AI Content Generator
+const aiContentGenerator = {
+    // Generate portfolio item suggestions
+    suggestPortfolioItem: async () => {
+        try {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('openai_key')}`
+                },
+                body: JSON.stringify({
+                    model: 'gpt-3.5-turbo',
+                    messages: [{
+                        role: 'system',
+                        content: 'You are a creative assistant helping to generate portfolio item ideas for a web developer. Suggest interesting project titles and descriptions.'
+                    },
+                    {
+                        role: 'user',
+                        content: 'Generate 3 creative portfolio item suggestions with titles and descriptions.'
+                    }]
+                })
+            });
+            
+            const data = await response.json();
+            return data.choices[0].message.content;
+        } catch (error) {
+            console.error('AI suggestion error:', error);
+            return 'Failed to generate suggestions. Please check your API key.';
+        }
+    },
+    
+    // Auto-categorize skills
+    categorizeSkill: (skillName) => {
+        const categories = {
+            'frontend': ['react', 'vue', 'angular', 'javascript', 'html', 'css'],
+            'backend': ['node', 'express', 'python', 'django', 'php', 'laravel'],
+            'design': ['photoshop', 'illustrator', 'figma', 'sketch', 'xd']
+        };
+        
+        for (const [category, keywords] of Object.entries(categories)) {
+            if (keywords.some(keyword => skillName.toLowerCase().includes(keyword))) {
+                return category;
+            }
+        }
+        return 'other';
+    },
+    
+    // Predictive text for descriptions
+    predictDescription: async (title) => {
+        try {
+            const response = await fetch('https://api.openai.com/v1/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('openai_key')}`
+                },
+                body: JSON.stringify({
+                    model: 'text-davinci-003',
+                    prompt: `Write a concise 2-3 sentence description for a portfolio item titled "${title}"`,
+                    max_tokens: 100
+                })
+            });
+            
+            const data = await response.json();
+            return data.choices[0].text.trim();
+        } catch (error) {
+            console.error('Prediction error:', error);
+            return '';
+        }
+    }
+};
+
 // Load data from localStorage
 function loadData() {
     const savedData = localStorage.getItem('portfolioData');
@@ -22,11 +95,26 @@ function saveData() {
     updateMainSite();
 }
 
-// Add portfolio item
+// Add portfolio item with AI suggestions
 function addPortfolioItem(item) {
     portfolioData.items.push(item);
     saveData();
     renderPortfolioItems();
+}
+
+// Get AI suggestions for portfolio
+async function getAISuggestions() {
+    const suggestions = await aiContentGenerator.suggestPortfolioItem();
+    document.getElementById('aiSuggestions').innerHTML = suggestions;
+}
+
+// Auto-fill description with AI
+async function autoFillDescription(titleInput, descriptionInput) {
+    const title = titleInput.value;
+    if (title.length > 3) {
+        const description = await aiContentGenerator.predictDescription(title);
+        descriptionInput.value = description;
+    }
 }
 
 // Update portfolio item
@@ -43,8 +131,11 @@ function deletePortfolioItem(index) {
     renderPortfolioItems();
 }
 
-// Add skill
+// Add skill with auto-categorization
 function addSkill(skill) {
+    if (!skill.category) {
+        skill.category = aiContentGenerator.categorizeSkill(skill.name);
+    }
     portfolioData.skills.push(skill);
     saveData();
     renderSkills();
@@ -179,3 +270,17 @@ function updateMainSite() {
 
 // Initialize data when page loads
 document.addEventListener('DOMContentLoaded', loadData);
+
+// Check authentication token on dashboard load
+function checkAuth() {
+  const token = localStorage.getItem('adminToken');
+  if (!token || !jwt.verify(token, 'your-secret-key')) {
+    window.location.href = 'login.html';
+  }
+}
+
+// Logout function
+function logout() {
+  localStorage.removeItem('adminToken');
+  window.location.href = 'login.html';
+}

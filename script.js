@@ -87,6 +87,19 @@ function closePopup() {
     }
 }
 
+// Add scroll effect for header text
+const header = document.querySelector('header');
+const headerText = header ? header.querySelector('h1, p') : null;
+
+window.addEventListener('scroll', function() {
+    if (header && headerText) {
+        const scrollPosition = window.scrollY;
+        const opacity = 1 - Math.min(scrollPosition / 300, 1);
+        headerText.style.opacity = opacity;
+        headerText.style.transform = `translateY(${scrollPosition * 0.5}px)`;
+    }
+});
+
 document.addEventListener('DOMContentLoaded', function() {
     const menuToggle = document.querySelector('.menu-toggle');
     const sidebar = document.querySelector('.sidebar');
