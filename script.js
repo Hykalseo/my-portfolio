@@ -28,16 +28,37 @@ function checkScreenSize() {
     }
 }
 
-window.addEventListener('load', function() {
-    const loadingScreen = document.querySelector('.loading-screen');
-    if (loadingScreen) {
-        setTimeout(() => {
-            loadingScreen.style.opacity = '0';
+document.addEventListener('DOMContentLoaded', function() {
+    const loadingScreens = document.querySelectorAll('.loading-screen');
+    
+    // Show loading screen immediately
+    loadingScreens.forEach(screen => {
+        screen.style.display = 'flex';
+        screen.style.opacity = '1';
+    });
+    
+    // Hide loading screen when page is fully loaded
+    window.addEventListener('load', function() {
+        loadingScreens.forEach(screen => {
+            screen.style.opacity = '0';
             setTimeout(() => {
-                loadingScreen.style.display = 'none';
+                screen.style.display = 'none';
             }, 500);
-        }, 1000);
-    }
+        });
+    });
+    
+    // Fallback in case load event doesn't fire
+    setTimeout(() => {
+        loadingScreens.forEach(screen => {
+            if (screen.style.opacity !== '0') {
+                screen.style.opacity = '0';
+                setTimeout(() => {
+                    screen.style.display = 'none';
+                }, 500);
+            }
+        });
+    }, 3000);
+    
     checkScreenSize();
 });
 
