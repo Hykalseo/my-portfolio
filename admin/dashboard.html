@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(-45deg, #1a1a2e, #16213e, #0f3460, #1b2d45);
+            background-size: 400% 400%;
+            animation: gradientBG 20s ease infinite;
+            margin: 0;
+            color: #fff;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .logout-btn, .return-btn {
+            color: #fff;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 1rem;
+        }
+
+        .logout-btn {
+            background: #ff4757;
+        }
+
+        .return-btn {
+            background: #4CAF50;
+        }
+
+        .return-btn:hover {
+            background: #45a049;
+        }
+
+        .section-container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        button {
+            background: #ff6b81;
+            color: #fff;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #ff4757;
+        }
+
+        .portfolio-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .portfolio-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 5px;
+        }
+
+        .portfolio-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>Admin Dashboard</h1>
+            <div>
+                <button class="return-btn" onclick="window.location.href='../landing.html'">Return to Home</button>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <div class="section-container">
+            <h2>Add Portfolio Item</h2>
+            <form id="portfolioForm">
+                <div class="form-group">
+                    <label for="title">Title</label>
+                    <input type="text" id="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" rows="4" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="image">Image URL</label>
+                    <input type="text" id="image" required>
+                </div>
+                <button type="submit">Add Item</button>
+            </form>
+        </div>
+
+        <div class="section-container">
+            <h2>Portfolio Items</h2>
+            <div class="portfolio-items" id="portfolioItems">
+                <!-- Portfolio items will be dynamically added here -->
+            </div>
+        </div>
+
+        <div class="section-container">
+            <h2>Update Skills</h2>
+            <form id="skillsForm">
+                <div class="form-group">
+                    <label for="skillCategory">Category</label>
+                    <input type="text" id="skillCategory" required>
+                </div>
+                <div class="form-group">
+                    <label for="skillName">Skill Name</label>
+                    <input type="text" id="skillName" required>
+                </div>
+                <div class="form-group">
+                    <label for="skillIcon">Icon URL</label>
+                    <input type="text" id="skillIcon" required>
+                </div>
+                <button type="submit">Add Skill</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Check authentication and session validity
+        function checkAuth() {
+            const session = JSON.parse(localStorage.getItem('adminSession') || '{}');
+            if (!session.authenticated || (new Date().getTime() - session.timestamp > session.expiresIn)) {
+                localStorage.removeItem('adminSession');
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Check auth on load and periodically
+        checkAuth();
+        setInterval(checkAuth, 60000); // Check every minute
+
+        function logout() {
+            localStorage.removeItem('adminSession');
+            window.location.href = 'login.html';
+        }
+
+        // Portfolio management
+        document.getElementById('portfolioForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const title = document.getElementById('title').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const image = document.getElementById('image').value.trim();
+
+            // Validate inputs
+            if (title.length < 3) {
+                alert('Title must be at least 3 characters long');
+                return;
+            }
+            if (description.length < 10) {
+                alert('Description must be at least 10 characters long');
+                return;
+            }
+            if (!isValidUrl(image)) {
+                alert('Please enter a valid image URL');
+                return;
+            }
+
+            try {
+                // Add to portfolio items (replace with backend integration)
+                const portfolioItem = document.createElement('div');
+                portfolioItem.className = 'portfolio-item';
+                portfolioItem.innerHTML = `
+                    <img src="${escapeHtml(image)}" alt="${escapeHtml(title)}">
+                    <h3>${escapeHtml(title)}</h3>
+                    <p>${escapeHtml(description)}</p>
+                    <div class="action-buttons">
+                        <button onclick="editItem(this)">Edit</button>
+                        <button onclick="deleteItem(this)">Delete</button>
+                    </div>
+                `;
+                document.getElementById('portfolioItems').appendChild(portfolioItem);
+
+                // Clear form
+                e.target.reset();
+            } catch (error) {
+                console.error('Error adding portfolio item:', error);
+                alert('An error occurred while adding the portfolio item');
+            }
+        });
+
+        function editItem(button) {
+            const item = button.closest('.portfolio-item');
+            // Implement edit functionality
+        }
+
+        function deleteItem(button) {
+            const item = button.closest('.portfolio-item');
+            item.remove();
+        }
+
+        // Helper functions
+        function isValidUrl(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Skills management
+        document.getElementById('skillsForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const category = document.getElementById('skillCategory').value.trim();
+            const name = document.getElementById('skillName').value.trim();
+            const icon = document.getElementById('skillIcon').value.trim();
+
+            // Validate inputs
+            if (category.length < 2) {
+                alert('Category must be at least 2 characters long');
+                return;
+            }
+            if (name.length < 2) {
+                alert('Skill name must be at least 2 characters long');
+                return;
+            }
+            if (!isValidUrl(icon)) {
+                alert('Please enter a valid icon URL');
+                return;
+            }
+
+            try {
+                // Implement skills management functionality
+                alert('Skill added successfully!');
+                e.target.reset();
+            } catch (error) {
+                console.error('Error adding skill:', error);
+                alert('An error occurred while adding the skill');
+            }
+        });
+    </script>
+</body>
+</html>

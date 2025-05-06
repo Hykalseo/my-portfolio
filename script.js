@@ -67,6 +67,21 @@ function closePopup() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    const menuToggle = document.querySelector('.menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const backdrop = document.querySelector('.backdrop');
+
+    if (menuToggle && sidebar && backdrop) {
+        function toggleMenu() {
+            menuToggle.classList.toggle('active');
+            sidebar.classList.toggle('active');
+            backdrop.classList.toggle('active');
+        }
+
+        menuToggle.addEventListener('click', toggleMenu);
+        backdrop.addEventListener('click', toggleMenu);
+    }
+
     const popup = document.getElementById('popup');
     if (popup) {
         popup.querySelector('.close-popup').removeEventListener('click', closePopup);
