@@ -345,7 +345,8 @@ section {
     color: #fff; /* White text in skill-category */
     padding: 25px;
     border-radius: 15px;
-    max-width: 600px;
+    width: 100%;
+    min-height: 300px;
     margin: 0 auto;
     position: relative;
     border: 1px solid rgba(0,0,0,0.05);
